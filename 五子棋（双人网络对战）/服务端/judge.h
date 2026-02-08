@@ -4,6 +4,7 @@
 
 typedef struct {
     char board[BOARD_SIZE][BOARD_SIZE];
+    char gc_count;// 引用计数
 } game_judge_t;
 
 

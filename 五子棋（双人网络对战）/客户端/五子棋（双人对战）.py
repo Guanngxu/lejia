@@ -139,9 +139,6 @@ class GomokuGame:
             self.my_turn = False
         elif cmd == Cmd.MSG_GAME_DISCONNECT:
             self.msg_queue.put(("MSG", "对手掉线了"))
-            
-
-
 
     def main_loop(self):
         """游戏主循环，不断处理事件和更新画面"""

@@ -64,14 +64,14 @@ int32_t handle_client_accept(int32_t epoll_fd, int32_t server_fd)
         client_arr[accept_fd]->next = NULL;
     }
     
-    printf("line: [%d] accepted new connection [fd=%d, ip=%s, port=%d, id=%d]\n", 
-        __LINE__, client_arr[accept_fd]->fd, client_arr[accept_fd]->ip, client_arr[accept_fd]->port, client_arr[accept_fd]->id);
     
-        // 如果客户端不为空，则更新其信息
+    // 如果客户端不为空，则更新其信息
     client_arr[accept_fd]->fd = accept_fd;
     inet_ntop(AF_INET, &client_addr.sin_addr, client_arr[accept_fd]->ip, INET_ADDRSTRLEN);
     client_arr[accept_fd]->port = ntohs(client_addr.sin_port);
-
+    
+    printf("line: [%d] accepted new connection [fd=%d, ip=%s, port=%d, id=%d]\n", 
+        __LINE__, client_arr[accept_fd]->fd, client_arr[accept_fd]->ip, client_arr[accept_fd]->port, client_arr[accept_fd]->id);
     // 将新的客户端 socket 添加到 epoll 实例中
     return epoll_add_fd(epoll_fd, accept_fd);
 }
@@ -141,6 +141,7 @@ int32_t match_competitors()
 
     game_judge_t *judge = (game_judge_t *) malloc(sizeof(game_judge_t));
     memset(judge, 0, sizeof(game_judge_t));
+    judge->gc_count = 2; // 初始引用计数为 2，分别对应两个客户端
     first->judge = judge;
     second->judge = judge;
 
@@ -205,6 +206,13 @@ int32_t handle_make_move(int32_t fd, char *buf, ssize_t len)
     // 更新棋盘状态
     int x = buf[3];
     int y = buf[4];
+    
+    // 检查落子位置是否合法
+    if(client_arr[fd]->judge->board[x][y] != 0) {
+        printf("line: [%d] error: client fd=%d attempted to place stone on occupied position (%d, %d)\n", __LINE__, fd, x, y);
+        return -1;
+    }
+
     client_arr[fd]->judge->board[x][y] = client_arr[fd]->stone_color;
 
     // 将移动请求转发给对手
@@ -252,6 +260,10 @@ void clean_client(int32_t epoll_fd, int32_t client_fd)
 
     epoll_remove_fd(epoll_fd, client_fd);
     client_id_fd[client_arr[client_fd]->id] = 0;
+    client_arr[client_fd]->judge->gc_count--;
+    if(client_arr[client_fd]->judge->gc_count <= 0) {
+        free(client_arr[client_fd]->judge);
+    }
     free(client_arr[client_fd]);
     client_arr[client_fd] = NULL;
 }
@@ -261,7 +273,7 @@ int32_t handle_client_data(int32_t epoll_fd, int32_t client_fd)
 {
     char read_buf[MSG_LEN] = {};
     memset(read_buf, 0, sizeof(read_buf));
-    ssize_t ret = read(client_fd, read_buf, MSG_LEN);
+    ssize_t ret = recv(client_fd, read_buf, MSG_LEN, MSG_WAITALL);
 
     if (ret <= 0) {
         if(ret < 0) {
