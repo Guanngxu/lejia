@@ -241,7 +241,8 @@ msg_type_info_t msg_typs[] = {
 
 void clean_client(int32_t epoll_fd, int32_t client_fd)
 {
-    if(client_arr[client_fd] == NULL) return;
+    if(client_fd < 0 || client_fd >= MAX_FD || client_arr[client_fd] == NULL) return;
+    client_info_t *target = client_arr[client_fd];
 
     // 匹配链表中移除该客户端
     client_info_t *prev = wait_competitor_head;
@@ -259,11 +260,21 @@ void clean_client(int32_t epoll_fd, int32_t client_fd)
     }
 
     epoll_remove_fd(epoll_fd, client_fd);
-    client_id_fd[client_arr[client_fd]->id] = 0;
-    client_arr[client_fd]->judge->gc_count--;
-    if(client_arr[client_fd]->judge->gc_count <= 0) {
-        free(client_arr[client_fd]->judge);
+    
+    // 3. 清理 ID 映射
+    if (target->id > 0 && target->id < MAX_FD) {
+        client_id_fd[target->id] = 0;
     }
+
+    // 4. 安全清理 judge 引用计数
+    if (target->judge != NULL) {
+        target->judge->gc_count--;
+        if (target->judge->gc_count <= 0) {
+            free(target->judge);
+            printf("line: [%d] judge object freed\n", __LINE__);
+        }
+    }
+
     free(client_arr[client_fd]);
     client_arr[client_fd] = NULL;
 }
