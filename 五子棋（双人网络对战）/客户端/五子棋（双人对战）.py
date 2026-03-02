@@ -264,10 +264,10 @@ class GomokuGame:
         pygame.init()  # 初始化Pygame所有模块
         self.window = pygame.display.set_mode((WINDOW_SIZE, WINDOW_SIZE))
         self.msg_queue = queue.Queue()
+        self.set_title("正在连接服务器...")
         self.msg_queue.put(("MSG", "五子棋双人对战")) # 设置窗口标题
         # 字体初始化
         self.font = pygame.font.SysFont("SimHei", 24) # 使用黑体
-        self.msg_queue.put(("MSG", "正在连接服务器..."))
         # 当前回合的棋子颜色，1=黑棋（玩家先手），2=白棋（AI）
         self.my_color = StoneColor.BLACK # 玩家棋子颜色
         self.competitor_color = StoneColor.WHITE  # 对手棋子颜色
@@ -278,6 +278,7 @@ class GomokuGame:
         self.judge = None
 
         self.draw_board() # 绘制初始棋盘
+        pygame.display.update()
         try:
             self.game_mode = GameMode.NETWORK
             self.tcp = TCPClient(self.tcp_callback, self.switch_to_ai)
