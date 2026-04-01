@@ -7,7 +7,7 @@ import os
 SCREEN_WIDTH, SCREEN_HEIGHT = 400, 600  # 定义游戏窗口的宽度和高度
 FPS = 60                                # 每秒刷新的帧数，控制游戏运行流畅度
 GRAVITY = 0.7                           # 模拟物理重力，每帧给玩家增加的向下速度
-SPRING_JUMP_VELOCITY = -20              # 弹簧给予玩家的跳跃速度，经验值，表示比普通跳跃更高的跳跃效果
+
 
 class Utils:
     # --- 资源加载助手函数 ---
@@ -119,7 +119,7 @@ class Spring(Item):
     def apply_effect(self, player):
         if self.has_used: return # 如果已经被使用过，直接返回，避免重复使用
         self.has_used = True # 标记为已使用
-        player.speed_y = SPRING_JUMP_VELOCITY # 弹簧给予玩家一个更强的向上的速度，模拟更高的跳跃效果
+        player.speed_y = -20 # 弹簧给予玩家一个更强的向上的速度，模拟更高的跳跃效果
         if self.sound:
             self.sound.play() # 播放弹簧音效
     
@@ -150,7 +150,6 @@ class GameSession:
         platform = Platform(SCREEN_WIDTH // 2 - 35, SCREEN_HEIGHT - 50)
         self.platforms.append(platform)
         # 初始化一些平台，确保玩家有地方跳
-        # 初始化的平台没有道具
         for i in range(8):
             platform = Platform(random.randint(0, SCREEN_WIDTH - 70), SCREEN_HEIGHT - (i * 80) - 150)
             self.platforms.append(platform)

@@ -86,8 +86,8 @@ class GameSession:
         platform = Platform(SCREEN_WIDTH // 2 - 35, SCREEN_HEIGHT - 50)
         self.platforms.append(platform)
         # 初始化一些平台，确保玩家有地方跳
-        for i in range(5):
-            platform = Platform(random.randint(0, SCREEN_WIDTH - 70), random.randint(0, SCREEN_HEIGHT - 20))
+        for i in range(8):
+            platform = Platform(random.randint(0, SCREEN_WIDTH - 70), SCREEN_HEIGHT - (i * 80) - 150)
             self.platforms.append(platform)
 
     def update(self): # 更新游戏数据
@@ -98,7 +98,6 @@ class GameSession:
         for platform in self.platforms:
             # 检测玩家是否与平台发生碰撞，并且玩家正在向下移动时检测，向上移动时不检测
             if self.player.rect.colliderect(platform.rect) and self.player.speed_y > 0:
-                # self.player.speed_y = -15 # 碰撞后给予玩家一个向上的速度，模拟跳跃效果
                 self.player.rect.bottom = platform.rect.top # 碰撞后将玩家的底部位置调整到平台的顶部，避免玩家穿过平台
                 self.player.speed_y = 0 # 碰撞后将玩家的垂直速度重置为0，模拟站在平台上的效果
                 keys = pygame.key.get_pressed()

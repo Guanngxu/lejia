@@ -7,7 +7,6 @@ import os
 SCREEN_WIDTH, SCREEN_HEIGHT = 400, 600  # 定义游戏窗口的宽度和高度
 FPS = 60                                # 每秒刷新的帧数，控制游戏运行流畅度
 GRAVITY = 0.7                           # 模拟物理重力，每帧给玩家增加的向下速度
-SPRING_JUMP_VELOCITY = -20              # 弹簧给予玩家的跳跃速度，经验值，表示比普通跳跃更高的跳跃效果
 WHITE, BLACK, GRAY = (255, 255, 255), (0, 0, 0), (100, 100, 100) # 颜色常量（RGB）
 TITLE_COLOR = (255, 120, 0)             # 主界面标题的颜色
 
@@ -142,7 +141,7 @@ class Spring(Item):
     def apply_effect(self, player):
         if self.has_used: return # 如果已经被使用过，直接返回，避免重复使用
         self.has_used = True # 标记为已使用
-        player.speed_y = SPRING_JUMP_VELOCITY # 弹簧给予玩家一个更强的向上的速度，模拟更高的跳跃效果
+        player.speed_y = -20 # 弹簧给予玩家一个更强的向上的速度，模拟更高的跳跃效果
         if self.sound:
             self.sound.play() # 播放弹簧音效
     
@@ -248,7 +247,6 @@ class GameSession:
         platform = Platform(SCREEN_WIDTH // 2 - 35, SCREEN_HEIGHT - 50)
         self.platforms.append(platform)
         # 初始化一些平台，确保玩家有地方跳
-        # 初始化的平台没有道具
         for i in range(8):
             platform = Platform(random.randint(0, SCREEN_WIDTH - 70), SCREEN_HEIGHT - (i * 80) - 150)
             self.platforms.append(platform)
@@ -267,16 +265,19 @@ class GameSession:
         self.score += scroll_amount // 10 # 根据滚动距离增加分数，10 是一个经验值，表示每滚动10像素得1分
         while len(self.platforms) < 8: # 保持屏幕上至少有8个平台
             new_platform = Platform(random.randint(0, SCREEN_WIDTH - 70), random.randint(-100, -40))
-            if Utils.hit_probability(Spring.probability): # 根据弹簧的生成概率决定是否在新平台上生成弹簧
-                spring = Spring(new_platform)
-                new_platform.item = spring # 将弹簧作为平台的一个属性，方便后续碰撞检测和更新
-            elif Utils.hit_probability(Propeller.probability): # 根据螺旋桨的生成概率决定是否在新平台上生成螺旋桨
-                propeller = Propeller(new_platform)
-                new_platform.item = propeller # 将螺旋桨作为平台的一个属性，方便后续碰撞检测和更新
+            self.generate_item(new_platform)
             self.platforms.append(new_platform)
 
         for cloud in self.clouds:
-            cloud.rect.y += scroll_amount // 2 # 云朵以较慢的速度向下滚动，制造出远近层次感
+            cloud.rect.y += scroll_amount // 2 # 云朵以较慢的速度向下滚动
+    
+    def generate_item(self, platform):
+        if Utils.hit_probability(Spring.probability): # 根据弹簧的生成概率决定是否在平台上生成弹簧
+            spring = Spring(platform)
+            platform.item = spring # 将弹簧作为平台的一个属性，方便后续碰撞检测和更新
+        elif Utils.hit_probability(Propeller.probability): # 根据螺旋桨的生成概率决定是否在平台上生成螺旋桨
+            propeller = Propeller(platform)
+            platform.item = propeller # 将螺旋桨作为平台的一个属性，方便后续碰撞检测和更新
 
     # 检测玩家与道具的碰撞，并处理道具效果
     def item_colliderect(self, item):

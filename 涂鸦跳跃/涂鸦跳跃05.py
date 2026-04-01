@@ -72,8 +72,8 @@ class GameSession:
         platform = Platform(SCREEN_WIDTH // 2 - 35, SCREEN_HEIGHT - 50)
         self.platforms.append(platform)
         # 初始化一些平台，确保玩家有地方跳
-        for i in range(5):
-            platform = Platform(random.randint(0, SCREEN_WIDTH - 70), random.randint(0, SCREEN_HEIGHT - 20))
+        for i in range(8):
+            platform = Platform(random.randint(0, SCREEN_WIDTH - 70), SCREEN_HEIGHT - (i * 80) - 150)
             self.platforms.append(platform)
 
     def update(self): # 更新游戏数据
